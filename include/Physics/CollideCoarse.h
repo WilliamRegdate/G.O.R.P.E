@@ -63,7 +63,6 @@ class Octree {
         // removes a collider from the octree and destroys the AABB associated with it
         void remove(Collider& collider);
 
-
         void update(Collider& collider);
 
         // Find all bounding boxes within a given bounding box

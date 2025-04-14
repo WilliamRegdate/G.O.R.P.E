@@ -16,7 +16,7 @@ class Player
         RigidBody body;
         Sphere bodyCollider;
         Camera camera;
-        float speed = 100.0f;
+        float speed = 50.0f;
         void processInput(GLFWwindow* window);
         void update(GLFWwindow* window);
     private:

@@ -23,19 +23,20 @@ class RigidBody
         void calculateImpulse(const glm::vec3& collisionPoint, const glm::vec3& collisionNormal, RigidBody* otherBody);
         void updateInertiaTensorWorld();
         glm::vec3 position = glm::vec3(0);
+        glm::quat orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+        glm::vec3 velocity = glm::vec3(0);
         bool isAwake;
         float mass;
 
+        glm::vec3 angularVelocity = glm::vec3(0);
     private:
         Model* model;
         glm::vec3 acceleration = glm::vec3(0);
-        glm::vec3 velocity = glm::vec3(0);
-
-        glm::quat orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        glm::vec3 torque = glm::vec3(0);
-        glm::vec3 angularVelocity = glm::vec3(0);
-
         
+        glm::vec3 torque = glm::vec3(0);
+
+        float staticFriction = 0.8f;
+        float kineticFriction = 0.5f; 
         float inverseMass;
 
         float restitution = 0.5f; // Bounciness of collisions

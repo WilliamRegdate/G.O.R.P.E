@@ -15,7 +15,7 @@ class Camera
 {
     public:
         glm::vec3 position;
-	    glm::vec3 orientation = glm::vec3(0.0f, 0.0f, -1.0f);
+	    glm::vec3 orientation = glm::vec3(0.0f, 0.0f, 1.0f);
 	    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	    glm::mat4 cameraMatrix = glm::mat4(1.0f);
 
@@ -27,13 +27,12 @@ class Camera
 	    int height;
 
 	    // Adjust the speed of the camera and it's sensitivity when looking around
-	    float speed = 0.1f;
 	    float sensitivity = 100.0f;
 
 	    // Camera constructor to set up initial values
 	    Camera(int width, int height, glm::vec3 position);
 
-	    // Updates the camera matrix to the Vertex Shader
+	    // Updates the camera matrix
 	    void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
 	    // Exports the camera matrix to a shader
 	    void Matrix(Shader& shader, const char* uniform);
