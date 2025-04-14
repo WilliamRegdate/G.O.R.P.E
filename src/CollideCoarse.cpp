@@ -11,9 +11,10 @@ AABB::AABB(Collider& collider)
     glm::vec3 Min;
     collider.size(Min, Max);
     glm::vec3 worldPos = collider.offset;
-    if (collider.body != nullptr) 
+    if (collider.body) 
     {
-        worldPos += collider.body->position;
+        worldPos = collider.body->orientation * worldPos; //apply rotation
+        worldPos += collider.body->position; // apply offset
     }
     min = Min + worldPos;
     max = Max + worldPos;
@@ -25,7 +26,8 @@ OctreeNode::OctreeNode(const glm::vec3& origin, const glm::vec3& halfSize)
     for (int i = 0; i < 8; ++i)
         children[i] = nullptr;
 }
-OctreeNode::~OctreeNode() {
+OctreeNode::~OctreeNode()
+{
     for (int i = 0; i < 8; ++i)
         delete children[i];
 }

@@ -96,7 +96,7 @@ int main()
 
 
     //create a player
-    Player player(glm::vec3(0, 4, 0), width, height, world);
+    Player player(glm::vec3(0, -30, 0), width, height, world);
 
     //set up the level
 	Model level("../resources/models/ramp/model.gltf");
@@ -118,7 +118,7 @@ int main()
 	{
         if(std::rand() % 50 + 1 == 1)
         {
-            balls.push_back(new Ball(glm::vec3(-80 + std::rand() % 160, 400, 235), world));
+            balls.push_back(new Ball(glm::vec3(235, 400, -80 + std::rand() % 160), world));
             models.push_back(&balls.back()->model);
         }
 		std::list<Ball*> ballsToRemove;

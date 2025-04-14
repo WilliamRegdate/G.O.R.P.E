@@ -1,14 +1,16 @@
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#define STB_IMAGE_IMPLEMENTATION
 #include <cstdlib>  // for rand() and srand()
 #include <ctime>
+
+
 
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
 
+#include"Light.h"
 #include"Physics/World.h"
 #include"Player.h"
 
@@ -69,15 +71,33 @@ int main()
 	Shader shaderProgram("../resources/shaders/default.vert", "../resources/shaders/default.frag");
 	
 
-	// Take care of all the light related things
-	glm::vec4 lightColor = glm::vec4(1.0f, 0.776f, 0.518f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
-	glm::mat4 lightModel = glm::mat4(1.0f);
-	lightModel = glm::translate(lightModel, lightPos);
-
+    lightController lightHandler(shaderProgram, 15);
 	shaderProgram.Activate();
-	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    
+	lightHandler.addLight( //RED
+        pointLight
+        {
+            glm::vec4(1.0f, 0.2f, 0.2f, 1.0f),				//color
+            glm::vec3(15.0f, 0.0f, 0.0f),					//pos
+            0.01f,											//linear
+            0.01f										//quadratic
+        });
+        lightHandler.addLight(  //GREEN
+        pointLight
+        {
+            glm::vec4(0.2f, 1.0f, 0.2f, 1.0f),				//color
+            glm::vec3(-15.0f, 0.0f, 0.0f),					//pos
+            0.03f,											//linear
+            0.01f										//quadratic
+        });
+        lightHandler.addLight( //BLUE
+        pointLight
+        {
+            glm::vec4(0.2f, 0.2f, 1.0f, 1.0f),				//color
+            glm::vec3(0.0f, 0.0f, 0.0f),					//pos
+            0.03f,											//linear
+            0.01f										//quadratic
+        });	
 
     glEnable(GL_DEPTH_TEST);
 

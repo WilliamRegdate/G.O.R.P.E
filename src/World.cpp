@@ -9,8 +9,8 @@ World::~World()
 {
     for(Collider* collider : World::colliders)
     {
-        colliders.remove(collider);
-        delete(collider);
+        //colliders.remove(collider);
+        //delete(collider);
     }
 }
 void World::bindCollider(Collider& collider)
@@ -43,22 +43,18 @@ void World::update(float deltaTime)
     potentialContacts.clear();
     
 }
-void World::getPotentialContacts(std::vector<PotentialContact> &output) 
+void World::getPotentialContacts(std::vector<PotentialContact> &output) //octree aproach
 {
     std::set<std::pair<Collider*, Collider*>> seenBodies;//contacts that are already detected
-
     for (Collider* collider : colliders) 
     {
         if (collider->body && collider->body->isAwake) 
         {
-            
             std::vector<Collider*> results;
             octree.queryRange(AABB(*collider), results);
-
             for (Collider* other : results) 
             {
                 if (collider == other) continue; // Skip self-collisions
-
                 std::pair<Collider*, Collider*> contactPair(collider, other);
                 std::pair<Collider*, Collider*> reversedPair(other, collider);
                 //checks if contact has already been dealt with
@@ -71,7 +67,8 @@ void World::getPotentialContacts(std::vector<PotentialContact> &output)
         }
     }
 }
-// void World::getPotentialContacts(std::vector<PotentialContact> &output) 
+
+// void World::getPotentialContacts(std::vector<PotentialContact> &output) //brute force approach
 // {
 //     for (Collider* collider : colliders)
 //     {
@@ -87,6 +84,19 @@ void World::getPotentialContacts(std::vector<PotentialContact> &output)
 //         }
 //     }
 // }
+
+// void World::getPotentialContacts(std::vector<PotentialContact> &output) //brute force approach not checking aabbs 
+// {
+//     for (Collider* collider : colliders)
+//     {
+//         if (!collider->body) continue;
+//         for (auto box : octree.boundingBoxes)
+//         {
+//             if (collider == box.second) continue;
+//             output.push_back(PotentialContact(*collider, *box.second));
+//         }
+//     }
+// }
 void World::getContacts(std::set<Contact, CompareByPenetration>& output)
 {
     for(PotentialContact& potContact : potentialContacts)
@@ -99,30 +109,22 @@ void World::getContacts(std::set<Contact, CompareByPenetration>& output)
         }
     }
 }
-void World::contactSolver() {
-    // Create a set of rigidbodies to keep track of seen contacts
+void World::contactSolver()
+{
+    // Create a set of rigidbodies to keep track of seen bodies
     std::set<RigidBody*> seenBodies;
 
     // Iterate through each contact in the sorted list of contacts
     for (auto& contact : contacts) {
 
-        //If either body has been seen before, recheck the collision
-        if (seenBodies.find(contact.colliders[0]->body) != seenBodies.end() || seenBodies.find(contact.colliders[1]->body) != seenBodies.end()) 
-        {
-            bool colliding;
-            contact.colliders[1]->checkCollisions(*contact.colliders[0], colliding);
-            if (!colliding)
-            {
-                continue;
-            }
-        }
-        //Apply the impulse after all checks
         glm::vec3 impulse = contact.penetration * contact.contactNormal;
 
-        if (contact.colliders[0]->body) {
+        if (contact.colliders[0]->body) 
+        {
             contact.colliders[0]->body->resolveInterpenetration(impulse, contact.colliders[1]->body);
         }
-        if (contact.colliders[1]->body) {
+        if (contact.colliders[1]->body) 
+        {
             contact.colliders[1]->body->resolveInterpenetration(-impulse, contact.colliders[0]->body);
             contact.colliders[1]->body->calculateImpulse(contact.position, contact.contactNormal, contact.colliders[0]->body);
         }
@@ -130,7 +132,6 @@ void World::contactSolver() {
         {
             contact.colliders[0]->body->calculateImpulse(contact.position, contact.contactNormal, contact.colliders[1]->body);
         }
-
 
         // Add the bodies to the seenBodies set
         if(contact.colliders[0]->body != nullptr)
@@ -145,7 +146,7 @@ void World::runPhysics(float duration)
     for(auto body : bodies)
     {
         body->updateInertiaTensorWorld();
-        body->addForce(glm::vec3(0, -24.81f, 0) * body->mass);
+        body->addForce(glm::vec3(0, -25.0f, 0) * body->mass); //apply gravity
         body->updateModel();
         body->integrate(duration);
     }

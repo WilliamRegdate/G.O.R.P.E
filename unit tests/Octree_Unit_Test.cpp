@@ -82,7 +82,7 @@ int main() {
 
 
     //bounding box with body offset test
-    RigidBody testBody(glm::vec3(0, 10, 0), 50.0f, nullptr);
+    RigidBody testBody(glm::vec3(0, 10, 0), 50.0f, 0.5f, nullptr);
     Sphere sphere(glm::vec3(0, 0, 5), 3, &testBody);
     AABB sphereBoxBody(sphere);
 

@@ -1,12 +1,12 @@
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#define STB_IMAGE_IMPLEMENTATION
 
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
 
+#include"Light.h"
 #include"Physics/World.h"
 #include"Player.h"
 
@@ -45,6 +45,14 @@ int main()
 
 	Shader shaderProgram("../resources/shaders/default.vert", "../resources/shaders/default.frag");
 	
+	lightController lightHandler(shaderProgram, 15);
+	lightHandler.addLight(direcLight
+	{
+		glm::vec4(0.7f, 0.7f, 0.55f, 1.0f),
+		glm::normalize(glm::vec3(0.5f, -1.0f, 0.5f))
+	});
+	
+	lightHandler.debug(1);
 
 	// Take care of all the light related things
 	glm::vec4 lightColor = glm::vec4(1.0f, 0.776f, 0.518f, 1.0f);

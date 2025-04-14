@@ -1,7 +1,6 @@
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#define STB_IMAGE_IMPLEMENTATION
 #include <cstdlib>  // for rand() and srand()
 #include <ctime>
 
@@ -11,10 +10,11 @@
 
 #include"Physics/World.h"
 #include"Player.h"
+#include"Light.h"
 
 
-const unsigned int width = 1280;
-const unsigned int height = 720;
+const unsigned int width = 1920;
+const unsigned int height = 1080;
 
 
 class Ball
@@ -38,6 +38,7 @@ class Ball
 };
 int main()
 {
+    
     //set up time seed
     std::srand(static_cast<unsigned int>(std::time(0)));
 	// Initialize GLFW
@@ -67,17 +68,19 @@ int main()
 	glViewport(0, 0, width, height);
 
 	Shader shaderProgram("../resources/shaders/default.vert", "../resources/shaders/default.frag");
-	
 
-	// Take care of all the light related things
-	glm::vec4 lightColor = glm::vec4(1.0f, 0.776f, 0.518f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
-	glm::mat4 lightModel = glm::mat4(1.0f);
-	lightModel = glm::translate(lightModel, lightPos);
+    
+
+    
 
 	shaderProgram.Activate();
-	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
+    lightController lightHandler(shaderProgram);
+    lightHandler.addLight(direcLight
+        {
+            glm::vec4(0.6f, 0.6f, 0.5f, 1.0f),
+            glm::normalize(glm::vec3(0.5f, -1.0f, 0.5f))
+        });
 
     glEnable(GL_DEPTH_TEST);
 
@@ -109,9 +112,9 @@ int main()
 	{
 		world.bindCollider(triangle);
 	}
-    for(int i = 0; i < 8; i++)
+    for(int i = 0; i < 200; i++)
     {
-        for(int j = 0; j < 2; j++)
+        for(int j = 0; j < 4; j++)
         {
             balls.push_back(new Ball(glm::vec3(15 * j, 10 * i + 10, 0), world));
             models.push_back(&balls.back()->model);

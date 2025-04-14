@@ -2,7 +2,7 @@
 
 
     Player::Player(const glm::vec3& position, float width, float height, World& world)
-        : bodyCollider(glm::vec3(0.0f, 0.0f, 0.0f), 2.0f, &body), body(position, 50.0f, 0.1f, nullptr), camera(width, height, position)
+        : bodyCollider(glm::vec3(0.0f, 0.0f, 0.0f), 2.0f, &body), body(position, 90.0f, 0.02f, nullptr), camera(width, height, position)
     {
         Player::world = &world;
         //binds players body to the physics world
@@ -26,35 +26,37 @@
         // Handles key inputs
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         {
-            body.addForce(speed * front);
+            body.velocity += speed  * front ;
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         {
-            body.addForce(speed * -glm::normalize(glm::cross(front, camera.up)));
+            body.velocity += speed * -glm::normalize(glm::cross(front, camera.up));
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         {
-           body.addForce(speed * -front);
+           body.velocity += speed * -front;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         {
-            body.addForce(speed * glm::normalize(glm::cross(front, camera.up)));
+            body.velocity += speed * glm::normalize(glm::cross(front, camera.up));
         }
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS )
         {
-            body.addForce(speed * camera.up);
+            //body.velocity.y = 0.0f;
+            body.position.y += 0.1f;
+            body.velocity += speed * camera.up;// * 20.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         {
-            body.addForce(speed * -camera.up);
+            body.velocity += speed * -camera.up;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         {
-            speed = 4000.0f;
+            speed = 3.0f;
         }
         else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
         {
-            speed = 1000.0f;
+            speed = 1.0f;
         }
     }
     void Player::update(GLFWwindow* window)

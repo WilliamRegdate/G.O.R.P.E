@@ -24,23 +24,6 @@ Mesh::Mesh(std::vector <Vertex>& vertices, std::vector <GLuint>& indices, std::v
 	//PrintMeshData();
 	
 }
-void Mesh::PrintMeshData() const {
-    std::cout << "Vertices:" << std::endl;
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        const Vertex& v = vertices[i];
-        std::cout << "Vertex " << i << ": "
-                  << "position(" << v.position.x << ", " << v.position.y << ", " << v.position.z << ") "
-                  << "Normal(" << v.normal.x << ", " << v.normal.y << ", " << v.normal.z << ") "
-                  << "Color(" << v.color.x << ", " << v.color.y << ", " << v.color.z << ") "
-                  << "TexCoords(" << v.texUV.x << ", " << v.texUV.y << ")" 
-                  << std::endl;
-    }
-
-    std::cout << "Indices:" << std::endl;
-    for (size_t i = 0; i < indices.size(); ++i) {
-        std::cout << "Index " << i << ": " << indices[i] << std::endl;
-    }
-}
 void Mesh::Draw
 (
 	Shader& shader, 
@@ -58,7 +41,7 @@ void Mesh::Draw
 	// Keep track of how many of each type of textures we have
 	unsigned int numDiffuse = 0;
 	unsigned int numSpecular = 0;
-
+	//load textures
 	for (unsigned int i = 0; i < textures.size(); i++)
 	{
 		std::string num;
@@ -84,6 +67,7 @@ void Mesh::Draw
 	glm::mat4 sca = glm::mat4(1.0f);
 
 	// Transform the matrices to their correct form
+	
 	trans = glm::translate(trans, translation);
 	rot = glm::mat4_cast(rotation);
 	sca = glm::scale(sca, scale);

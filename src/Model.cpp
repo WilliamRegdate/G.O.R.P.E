@@ -21,15 +21,6 @@ Model::Model(const char* file)
 
     // Traverse all nodes
     traverseNode(0, vertices, indices);
-    std::cout << "Loaded " << vertices.size() << " vertices total" << std::endl;
-    std::cout << "Loaded " << indices.size() << " indices total" << std::endl;
-    std::cout << "Loaded " << loadedTex.size() << " textures total" << std::endl;
-	std::cout << "First vertex pos " 
-          	  << vertices[0].position.x << " " 
-          	  << vertices[0].position.y << " " 
-          	  << vertices[0].position.z 
-          	  << std::endl;
-
 	std::vector<Texture> textures = getTextures();
 
     // Create a single mesh with combined data
@@ -78,7 +69,7 @@ void Model::loadMesh(unsigned int indMesh, std::vector<Vertex>& vertices, std::v
 
     vertices.insert(vertices.end(), tempVertices.begin(), tempVertices.end());
 
-    std::cout << "Mesh loaded and combined!" << std::endl;
+    // std::cout << "Mesh loaded and combined!" << std::endl;
 }
 
 void Model::traverseNode(unsigned int nextNode, std::vector<Vertex>& vertices,std::vector<GLuint>& indices, glm::mat4 matrix)
@@ -255,7 +246,6 @@ std::vector<GLuint> Model::getIndices(json accessor)
 			indices.push_back((GLuint)value);
 		}
 	}
-
 	return indices;
 }
 
@@ -304,7 +294,7 @@ std::vector<Texture> Model::getTextures()
 				loadedTex.push_back(diffuse);
 				loadedTexName.push_back(texPath);
 
-				std::cout<<"texture loaded"<<std::endl;
+				// std::cout<<"texture loaded"<<std::endl;
 			}
 			// Load specular texture
 			else if (texPath.find("metallicRoughness") != std::string::npos)
@@ -314,7 +304,7 @@ std::vector<Texture> Model::getTextures()
 				loadedTex.push_back(specular);
 				loadedTexName.push_back(texPath);
 
-				std::cout<<"specular texture loaded"<<std::endl;
+				// std::cout<<"specular texture loaded"<<std::endl;
 			}
 		}
 	}
@@ -348,49 +338,30 @@ std::vector<Vertex> Model::assembleVertices
 
 std::vector<glm::vec2> Model::groupFloatsVec2(std::vector<float> floatVec)
 {
-    std::vector<glm::vec2> vectors;
-    for (int i = 0; i < floatVec.size(); i += 2)
-    {
-        // Access the x, y values explicitly
-        float x = floatVec[i];
-        float y = floatVec[i + 1];
-
-        // Create the glm::vec2 object in the correct order
-        vectors.push_back(glm::vec2(x, y));
-    }
-    return vectors;
+	std::vector<glm::vec2> vectors;
+	for (int i = 0; i < floatVec.size(); i)
+	{
+		vectors.push_back(glm::vec2(floatVec[i++], floatVec[i++]));
+	}
+	return vectors;
 }
 std::vector<glm::vec3> Model::groupFloatsVec3(std::vector<float> floatVec)
 {
-    std::vector<glm::vec3> vectors;
-    for (int i = 0; i < floatVec.size(); i += 3)
-    {
-        // Access the x, y, z values explicitly
-        float x = floatVec[i];
-        float y = floatVec[i + 1];
-        float z = floatVec[i + 2];
-
-        // Create the glm::vec3 object in the correct order
-		//flip values as they are flipped
-        vectors.push_back(glm::vec3(x, y, z));
-    }
-    return vectors;
+	std::vector<glm::vec3> vectors;
+	for (int i = 0; i < floatVec.size(); i)
+	{
+		vectors.push_back(glm::vec3(floatVec[i++], floatVec[i++], floatVec[i++]));
+	}
+	return vectors;
 }
 std::vector<glm::vec4> Model::groupFloatsVec4(std::vector<float> floatVec)
 {
-    std::vector<glm::vec4> vectors;
-    for (int i = 0; i < floatVec.size(); i += 4)
-    {
-        // Access the x, y, z, w values explicitly
-        float x = floatVec[i];
-        float y = floatVec[i + 1];
-        float z = floatVec[i + 2];
-        float w = floatVec[i + 3];
-
-        // Create the glm::vec4 object in the correct order
-        vectors.push_back(glm::vec4(x, y, z, w));
-    }
-    return vectors;
+	std::vector<glm::vec4> vectors;
+	for (int i = 0; i < floatVec.size(); i)
+	{
+		vectors.push_back(glm::vec4(floatVec[i++], floatVec[i++], floatVec[i++], floatVec[i++]));
+	}
+	return vectors;
 }
 bool Model::fileExists(const std::string& fileName) {
     std::ifstream infile(fileName);

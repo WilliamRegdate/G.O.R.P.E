@@ -22,7 +22,7 @@ RigidBody::RigidBody(glm::vec3 position, float mass, float bounciness, Model* Mo
         inverseMass = 0;
     }
     isAwake = true;
-    inertiaTensorLocal = glm::mat4(mass);
+    inertiaTensorLocal = glm::mat4(mass*mass);
 }
 
 void RigidBody::addForce(const glm::vec3 force)
@@ -58,8 +58,8 @@ void RigidBody::integrate(float duration)
     orientation = glm::normalize(orientation); // Normalize to avoid floating-point drift
 
     // Apply damping to linear and angular velocities
-    velocity *= 0.99; // Linear damping
-    angularVelocity *= 0.99f; // Angular damping
+    velocity *= 1 - (0.3f * duration); // Linear damping
+    angularVelocity *= 1 - (0.3f * duration); // Angular damping
 
     acceleration = glm::vec3(0);
 }
@@ -68,7 +68,7 @@ void RigidBody::updateModel()
 {
     if (model)
     {
-        model->updateTransform(position, orientation);
+        model->updateTransform(position, orientation, model->scale);
     }
 }
 void RigidBody::resolveInterpenetration(const glm::vec3& impulse, const RigidBody* otherBody)
@@ -89,9 +89,10 @@ void RigidBody::updateInertiaTensorWorld()
     glm::mat3 inertiaTensorWorld = rotationMatrix * inertiaTensorLocal * glm::transpose(rotationMatrix);
     inverseInertiaTensorWorld = glm::inverse(inertiaTensorWorld);
 }
+
 void RigidBody::calculateImpulse(const glm::vec3& collisionPoint, const glm::vec3& collisionNormal, RigidBody* otherBody)
 {
-    // If otherBody is static or has infinite mass, we apply the impulse only to this object
+    // If otherBody is static or has infinite mass, apply impulse only to this object
     if (!otherBody || otherBody->inverseMass <= 0.0f)
     {
         glm::vec3 r1 = collisionPoint - position;
@@ -100,56 +101,88 @@ void RigidBody::calculateImpulse(const glm::vec3& collisionPoint, const glm::vec
         // Calculate velocity along the collision normal
         float normalVelocity = glm::dot(relativeVelocity, collisionNormal);
 
-        if (normalVelocity >= 0.0f) return; // No collision if separating
-
         // Calculate impulse scalar
-        float e = std::min(restitution, 1.0f); // restitution for bounciness
-        float j = -(1.0f + e) * normalVelocity;
-        j /= inverseMass + glm::dot(collisionNormal, glm::cross(inverseInertiaTensorWorld * glm::cross(r1, collisionNormal), r1));
+        float e = glm::min(restitution, 1.0f);
+        float denominator = inverseMass + glm::dot(collisionNormal, glm::cross(inverseInertiaTensorWorld * glm::cross(r1, collisionNormal), r1));
+        
+        if (denominator == 0.0f) return; // Prevent division by zero
 
-        // Impulse vector
+        float j = -(1.0f + e) * normalVelocity / denominator;
         glm::vec3 impulse = j * collisionNormal;
 
-        // Apply impulse to linear velocity
+        // Apply impulse 
         velocity += impulse * inverseMass;
-
-        // Apply impulse to angular velocity
         angularVelocity += inverseInertiaTensorWorld * glm::cross(r1, impulse);
+
+        // Friction calculation
+        glm::vec3 tangent = relativeVelocity - (normalVelocity * collisionNormal);
+        float tangentMagnitude = glm::length(tangent);
         
+        if (tangentMagnitude > 0.0f) {
+            tangent = glm::normalize(tangent);
+        }
+
+        float staticThreshold = 0.001f; // Small threshold to determine static vs kinetic friction
+        float frictionCoefficient = (tangentMagnitude < staticThreshold) ? staticFriction : kineticFriction;
+        float maxFrictionMagnitude = frictionCoefficient * glm::length(impulse);
+        glm::vec3 frictionImpulse = -tangent * maxFrictionMagnitude;
+
+        // Apply friction to linear and angular velocities
+        velocity += frictionImpulse * inverseMass * 0.9f;
+        angularVelocity += inverseInertiaTensorWorld * glm::cross(r1, frictionImpulse);
         return;
-    }
+    }  
 
-    // For two dynamic bodies, calculate the relative velocity at the collision point
-    glm::vec3 r1 = collisionPoint - position;
-    glm::vec3 r2 = collisionPoint - otherBody->position;
+    glm::vec3 relativePosition_A = collisionPoint - position;
+    glm::vec3 relativePosition_B = collisionPoint - otherBody->position;
 
-    glm::vec3 v1 = velocity + glm::cross(angularVelocity, r1);
-    glm::vec3 v2 = otherBody->velocity + glm::cross(otherBody->angularVelocity, r2);
+    // Compute relative velocity at the collision point
+    glm::vec3 collisionVelocity_A = velocity + glm::cross(angularVelocity, relativePosition_A);
+    glm::vec3 collisionVelocity_B = otherBody->velocity + glm::cross(otherBody->angularVelocity, relativePosition_B);
+    glm::vec3 relativeVelocity = collisionVelocity_A - collisionVelocity_B;
 
-    glm::vec3 relativeVelocity = v1 - v2;
-
-    // Calculate the velocity along the collision normal
+    // Project the velocity onto the collision normal
     float normalVelocity = glm::dot(relativeVelocity, collisionNormal);
 
-    if (normalVelocity >= 0.0f) return; // No collision if separating
+    // Calculate impulse scalar
+    float e = glm::min(restitution, otherBody->restitution);
+    float denominator = inverseMass + otherBody->inverseMass +
+        glm::dot(collisionNormal, glm::cross(inverseInertiaTensorWorld * glm::cross(relativePosition_A, collisionNormal), relativePosition_A)) +
+        glm::dot(collisionNormal, glm::cross(otherBody->inverseInertiaTensorWorld * glm::cross(relativePosition_B, collisionNormal), relativePosition_B));
 
-    // Calculate the impulse scalar
-    float e = std::min(restitution, otherBody->restitution); // restitution for bounciness
-    float j = -(1.0f + e) * normalVelocity;
-    j /= (inverseMass + otherBody->inverseMass) +
-         glm::dot(collisionNormal, glm::cross(inverseInertiaTensorWorld * glm::cross(r1, collisionNormal), r1)) +
-         glm::dot(collisionNormal, glm::cross(otherBody->inverseInertiaTensorWorld * glm::cross(r2, collisionNormal), r2));
+    if (denominator == 0.0f) return; // Prevent division by zero
 
-    // Impulse vector
-    glm::vec3 impulse = j * collisionNormal;
+    float j = -(1.0f + e) * normalVelocity / denominator;
+    glm::vec3 impulse = j * collisionNormal; // Impulse vector
 
-    // Apply impulse to both bodies' linear velocities
+    // Apply impulse to both linear velocities
     velocity += impulse * inverseMass;
     otherBody->velocity -= impulse * otherBody->inverseMass;
 
-    // Apply impulse to both bodies' angular velocities
-    angularVelocity += inverseInertiaTensorWorld * glm::cross(r1, impulse);
-    otherBody->angularVelocity -= otherBody->inverseInertiaTensorWorld * glm::cross(r2, impulse);
+    // Apply impulse to both angular velocities
+    angularVelocity += inverseInertiaTensorWorld * glm::cross(relativePosition_A, impulse);
+    otherBody->angularVelocity -= otherBody->inverseInertiaTensorWorld * glm::cross(relativePosition_B, impulse);
+
+    // Friction calculation
+    glm::vec3 tangent = relativeVelocity - (normalVelocity * collisionNormal);
+    float tangentMagnitude = glm::length(tangent);
+
+    if (tangentMagnitude > 0.0f) {
+        tangent = glm::normalize(tangent);
+    }
+
+    float staticThreshold = 0.001f;
+    float frictionCoefficient = (tangentMagnitude < staticThreshold) ? glm::min(staticFriction, otherBody->staticFriction) : glm::min(kineticFriction, otherBody->kineticFriction);
+    float maxFrictionMagnitude = frictionCoefficient * glm::length(impulse);
+    glm::vec3 frictionImpulse = -tangent * maxFrictionMagnitude;
+
+    // Apply friction to both objects
+    velocity += frictionImpulse * inverseMass;
+    otherBody->velocity -= frictionImpulse * otherBody->inverseMass;
+
+    // Apply friction to angular velocities
+    angularVelocity += inverseInertiaTensorWorld * glm::cross(relativePosition_A, frictionImpulse);
+    otherBody->angularVelocity -= otherBody->inverseInertiaTensorWorld * glm::cross(relativePosition_B, frictionImpulse);
 }
 
 
